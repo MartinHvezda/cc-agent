@@ -1,0 +1,3 @@
+email: test@email.com; Hi, I have problem with my account I cannot login.               # cannot_login
+email: test@email.com; Hi, I forgot my password. What should I do?                      # forgot_pass
+email: test@email.com; Hi, I don't see my credit card in my account. Can you help me?   # card_problem

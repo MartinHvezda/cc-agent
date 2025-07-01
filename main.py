@@ -2,8 +2,12 @@ import json
 
 from ollama import chat
 
+debug = True
+debug_actor = "Debug:"
+
 def get_identity_id(email):
-    print("Getting identity by email: ", email)
+    if debug:
+        print(f"{debug_actor} Getting identity by email: ", email)
     return {
         "type": "success",
         "content": {
@@ -12,16 +16,18 @@ def get_identity_id(email):
     }
 
 def send_reset_password_email(identity_id):
-    print("Sending reset password email for identity: ", identity_id)
+    if debug:
+        print(f"{debug_actor} Sending reset password email for identity: ", identity_id)
     return {
         "type": "success",
         "content": "Email sent"
     }
 
 def create_jira_ticket(description, queue):
-    print("Creating jira ticket")
-    print(description)
-    print(queue)
+    if debug:
+        print(f"{debug_actor} Creating jira ticket")
+        print(f"{debug_actor} {description}")
+        print(f"{debug_actor} {queue}")
     return {
         "type": "success",
         "content": "Jira ticket created successfully"
@@ -92,15 +98,10 @@ tools_to_function_map = {
 }
 
 team_queues = {
-    "IDM": "Identity management",
-    "IT": "Information technology",
-    "HR": "Human resources",
+    "IAM": "Identity access management",
+    "CRM": "Customer relationship management",
+    "Payments": "Payments",
     "MARKETING": "Marketing",
-    "FINANCE": "Finance",
-    "PRODUCTION": "Production",
-    "DEVELOPMENT": "Development",
-    "OPERATIONS": "Operations",
-    "OTHER": "Other team queue"
 }
 
 def chat_and_append(messages, tools):
@@ -119,10 +120,12 @@ def execute_tools(messages, response, iterations_to_end):
             function_name = tool_call.function.name
             function_args = tool_call.function.arguments
 
-            print(f"Executing tool: {function_name}({function_args})")
+            if debug:
+                print(f"{debug_actor} Executing tool: {function_name}({function_args})")
             tool_response = tools_to_function_map[function_name](**function_args)
 
-            print(f"Tool result: {tool_response}")
+            if debug:
+                print(f"{debug_actor} Tool result: {tool_response}")
 
             messages.append({
                 "role": "tool",
@@ -133,13 +136,12 @@ def execute_tools(messages, response, iterations_to_end):
 
         return execute_tools(messages, tool_response, iterations_to_end - 1)
     else:
+        print("Agent: " + response.message.content)
         return response
 
 def main():
     print("Start")
-    # issue = "email: test@email.com; Hi, I have problem with my account I cannot login." # cannot_login
-    # issue = "email: test@email.com; Hi, I forgot my password. What should I do?" # forgot_pass
-    issue = "email: test@email.com; Hi, I don't see my credit card in my account. Can you help me?" # card_problem
+    issue = input("Enter the issue: ")
     messages = [
         {"role": "system",
          "content": "You are a customer care agent. A user will describe an issue including their email address. Investigate the issue and try to resolve it using only predefined tools or by providing general, factual advice. "
@@ -150,18 +152,16 @@ def main():
                     f"List of team queues and description {json.dumps(team_queues)}"},
         {"role": "user", "content": issue}
     ]
-    response = chat_and_append(messages, tools)
-
-    first_phase = execute_tools(messages, response, 3)
-    print(first_phase.message.content)
+    new_issue_response = chat_and_append(messages, tools)
+    execute_tools(messages, new_issue_response, 3)
 
     user_followup = input("\nYou: ")
-    final_response = chat_and_append(messages + [{"role": "user", "content": user_followup}], tools)
-    execute_tools(messages, final_response, 3)
-    print(final_response)
 
-    print(f"\nFinal content: {final_response.message.content}")
-    return final_response
+    issue_detail_response = chat_and_append(messages + [{"role": "user", "content": user_followup}], tools)
+    execute_tools(messages, issue_detail_response, 3)
+
+    print(f"\nFinal content: {issue_detail_response.message.content}")
+    return issue_detail_response
 
 
 
