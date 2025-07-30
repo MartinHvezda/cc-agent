@@ -27,28 +27,63 @@ def investigate_similar_issues(query: str) -> Dict[str, Any]:
     Args:
         query: The customer issue description to search for
     """
-    # TODO: Implement vector database search
-    # This would typically involve:
-    # 1. Embedding the query
-    # 2. Searching vector database for similar issues  
-    # 3. Returning relevant historical cases and solutions
-    
-    return {
-        "similar_issues": [
-            {
-                "issue": "Customer cannot login - password reset needed",
-                "resolution": "IAM agent resolved via password reset",
-                "similarity_score": 0.85
-            },
-            {
-                "issue": "Account locked after multiple failed attempts", 
-                "resolution": "IAM agent unlocked account and reset MFA",
-                "similarity_score": 0.72
+    try:
+        from services.vector_service import get_vector_service
+        
+        vector_service = get_vector_service()
+        
+        # Get queue analysis for similar issues
+        queue_analysis = vector_service.get_queue_analysis(query)
+        
+        return {
+            "similar_issues": [
+                {
+                    "key": issue["key"],
+                    "title": issue["title"],
+                    "description": issue["description"],
+                    "status": issue["status"],
+                    "resolved_by_queue": issue["resolved_by_queue"],
+                    "comments": issue["comments"],
+                    "similarity_score": issue["similarity_score"]
+                }
+                for issue in queue_analysis["similar_issues"]
+            ],
+            "queue_analysis": queue_analysis["queue_analysis"],
+            "analysis_confidence": queue_analysis["analysis_confidence"],
+            "search_performed": True,
+            "total_results": queue_analysis["total_similar_issues"]
+        }
+        
+    except Exception as e:
+        print(f"❌ Vector search failed: {e}")
+        # Fallback to basic analysis
+        query_lower = query.lower()
+        if any(keyword in query_lower for keyword in ["password", "login", "access", "mfa", "2fa", "authentication"]):
+            return {
+                "similar_issues": [
+                    {
+                        "key": "CS-FALLBACK",
+                        "title": "Cannot Login - Password Reset",
+                        "description": "Customer cannot login - password reset needed",
+                        "status": "Done",
+                        "resolved_by_queue": "IAM",
+                        "comments": ["Password reset resolved the issue"],
+                        "similarity_score": 0.75
+                    }
+                ],
+                "queue_analysis": {"IAM": {"count": 1, "percentage": 100.0, "avg_similarity": 0.75}},
+                "analysis_confidence": 0.7,
+                "search_performed": False,
+                "fallback_used": True
             }
-        ],
-        "recommended_agent": "IAM_Agent",
-        "confidence": 0.8
-    }
+        else:
+            return {
+                "similar_issues": [],
+                "queue_analysis": {},
+                "analysis_confidence": 0.0,
+                "search_performed": False,
+                "fallback_used": True
+            }
 
 @tool
 def route_to_specialist_agent(agent_name: str, issue_summary: str, customer_email: str) -> Dict[str, Any]:
@@ -118,21 +153,27 @@ def create_supervisor_agent(llm: ChatOpenAI):
     
     system_prompt = """You are a Customer Care Supervisor Agent. Your role is to:
 
-1. INVESTIGATE: First, search for similar issues in the knowledge base and logs using investigate_similar_issues
-2. ANALYZE: Understand the customer's problem and context using get_customer_context
-3. ROUTE: Determine which specialist agent can best handle this issue using route_to_specialist_agent
-4. SUPERVISE: Monitor the resolution process and escalate if needed using escalate_to_human
+1. INVESTIGATE: Search for similar issues using investigate_similar_issues to understand how similar problems were resolved
+2. ANALYZE: Review the queue analysis to see which teams/queues have successfully handled similar issues  
+3. DECIDE: Make intelligent routing decisions based on historical patterns and issue characteristics
+4. ROUTE: Direct issues to appropriate AI agents or escalate to human teams when needed
 
-Available specialist agents:
-- IAM_Agent: Identity and access management issues (login, password, MFA, account blocking)
-- CRM_Agent: Customer relationship and account issues
-- Payments_Agent: Payment and billing related issues
-- Marketing_Agent: Promotional and marketing inquiries
+IMPORTANT CONTEXT:
+- Most historical issues were resolved by human teams/queues (IAM, CRM, Payments, Marketing, etc.)
+- AI agents (IAM_Agent) are new and should only handle issues they're specifically designed for
+- Use historical queue patterns to inform your routing decisions
+- The queue_analysis shows which human teams have successfully resolved similar issues
+
+ROUTING LOGIC:
+- For IAM issues (login, password, MFA): Route to IAM_Agent if it can handle it, otherwise escalate to IAM queue
+- For other issues: Analyze historical queue patterns and route accordingly  
+- Always explain your routing decision based on the evidence from similar issues
 
 PROCESS:
-Always start by investigating similar issues before routing.
-Be thorough in your analysis and provide clear reasoning for your decisions.
-Use the tools available to gather information and make informed routing decisions."""
+1. Investigate similar issues and analyze queue patterns
+2. Get customer context if needed
+3. Make routing decision based on evidence and agent capabilities
+4. Provide clear reasoning for your decision"""
 
     return create_supervisor(
         model=llm,
