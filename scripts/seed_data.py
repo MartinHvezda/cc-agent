@@ -9,7 +9,7 @@ def seed_sample_issues():
     """Seed the database with sample customer issues in Jira format"""
     sample_issues = [
         {
-            "key": "CS-1001",
+            "key": "IAM-1001",
             "title": "Cannot Login - Forgot Password",
             "description": "I can't log into my account, I think I forgot my password. Getting error message when trying to sign in.",
             "status": "Done",
@@ -21,7 +21,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1002", 
+            "key": "IAM-1002",
             "title": "Account Locked - Multiple Failed Attempts",
             "description": "My account is locked after multiple failed login attempts. Cannot access my dashboard or any services.",
             "status": "Done",
@@ -34,7 +34,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1003",
+            "key": "IAM-1003",
             "title": "Lost 2FA Device Access",
             "description": "I lost access to my 2FA device and cannot login. Need help resetting multi-factor authentication.",
             "status": "Done", 
@@ -46,7 +46,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1004",
+            "key": "IAM-1004",
             "title": "Authentication Errors",
             "description": "Cannot access my account, getting authentication errors every time I try to login.",
             "status": "Done",
@@ -58,7 +58,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1005",
+            "key": "CRM-1005",
             "title": "Credit Card Not Showing",
             "description": "My credit card is not showing up in my account payment methods. It was there yesterday.",
             "status": "Done",
@@ -70,7 +70,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1006",
+            "key": "PMT-1006",
             "title": "Duplicate Charge",
             "description": "I was charged twice for the same transaction on my latest invoice. Need refund for duplicate charge.",
             "status": "Done",
@@ -82,7 +82,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1007",
+            "key": "CRM-1007",
             "title": "Cancel Subscription",
             "description": "How do I cancel my subscription? Cannot find the cancellation option in my account settings.",
             "status": "Done",
@@ -94,7 +94,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1008", 
+            "key": "IAM-1008",
             "title": "Update Email Address",
             "description": "I need to update my email address associated with my account. Current email is no longer active.",
             "status": "Done",
@@ -106,7 +106,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1009",
+            "key": "CRM-1009",
             "title": "Billing Address Update",
             "description": "Need to update my billing address for my subscription. Moved to a new location last month.",
             "status": "Done",
@@ -118,7 +118,7 @@ def seed_sample_issues():
             ]
         },
         {
-            "key": "CS-1010",
+            "key": "PMT-1010",
             "title": "Payment Method Declined",
             "description": "My payment method was declined but the card is valid. Need help updating payment information.",
             "status": "Done",
