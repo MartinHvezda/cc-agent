@@ -12,9 +12,6 @@ from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.prebuilt import create_react_agent
-from langgraph_supervisor import create_supervisor
-
-from agents.iam_agent import iam_agent
 
 load_dotenv()
 
@@ -175,11 +172,10 @@ PROCESS:
 3. Make routing decision based on evidence and agent capabilities
 4. Provide clear reasoning for your decision"""
 
-    return create_supervisor(
+    return create_react_agent(
         model=llm,
         tools=supervisor_tools,
-        state_modifier=system_prompt,
-        agents=[iam_agent]
+        state_modifier=system_prompt
     )
 
 # Supervisor Agent instance

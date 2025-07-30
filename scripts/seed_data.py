@@ -3,6 +3,10 @@ Seed script for populating vector database with sample customer support issues
 This is separate from production code to avoid accidentally seeding in production
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from services.vector_service import get_vector_service
 
 def seed_sample_issues():
@@ -74,7 +78,7 @@ def seed_sample_issues():
             "title": "Duplicate Charge",
             "description": "I was charged twice for the same transaction on my latest invoice. Need refund for duplicate charge.",
             "status": "Done",
-            "resolved_by_queue": "Payments",
+            "resolved_by_queue": "PMT",
             "comments": [
                 "Human agent: Duplicate charge confirmed in billing system",
                 "Human agent: Refund processed within 3-5 business days",
@@ -122,7 +126,7 @@ def seed_sample_issues():
             "title": "Payment Method Declined",
             "description": "My payment method was declined but the card is valid. Need help updating payment information.",
             "status": "Done",
-            "resolved_by_queue": "Payments",
+            "resolved_by_queue": "PMT",
             "comments": [
                 "Human agent: Card verification completed successfully",
                 "Human agent: Payment method updated and retry successful",

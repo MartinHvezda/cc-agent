@@ -249,7 +249,8 @@ def main():
         process_customer_issue(sample["issue"], sample["email"])
         
         if i < len(sample_issues):
-            input("\nPress Enter to continue to next issue...")
+            print("\nContinuing to next issue...")
+            print("=" * 80)
 
 if __name__ == "__main__":
     # Check if OpenAI API key is set up
