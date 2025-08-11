@@ -1,0 +1,59 @@
+[
+  {
+    "email": "test@email.com",
+    "issue": "Hi, I have problem with my account I cannot login.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent",
+    "expected_tools": [
+      "get_user_identity",
+      "check_account_status",
+      "get_login_history"
+    ]
+  },
+  {
+    "email": "user@example.com",
+    "issue": "Hi, I forgot my password. What should I do?",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent",
+    "expected_tools": [
+      "get_user_identity",
+      "reset_password"
+    ]
+  },
+  {
+    "email": "customer@company.com",
+    "issue": "My account is locked and I can't access my MFA device.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent",
+    "expected_tools": [
+      "get_user_identity",
+      "check_account_status",
+      "reset_mfa_devices"
+    ]
+  },
+  {
+    "email": "test@email.com",
+    "issue": "Hi, I don't see my credit card in my account. Can you help me?",
+    "category": "payments",
+    "expected_resolution": "needs_escalation",
+    "expected_agent": null,
+    "expected_tools": [
+      "investigate_similar_issues",
+      "get_customer_context"
+    ]
+  },
+  {
+    "email": "support@client.com",
+    "issue": "Can you reset my 2FA authentication? I lost my phone.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent",
+    "expected_tools": [
+      "get_user_identity",
+      "reset_mfa_devices"
+    ]
+  }
+]

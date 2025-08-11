@@ -1,0 +1,72 @@
+[
+  {
+    "email": "test@email.com",
+    "issue": "Hi, I have problem with my account I cannot login.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent"
+  },
+  {
+    "email": "user@example.com",
+    "issue": "Hi, I forgot my password. What should I do?",
+    "category": "iam", 
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent"
+  },
+  {
+    "email": "customer@company.com",
+    "issue": "My account is locked and I can't access my MFA device.",
+    "category": "iam",
+    "expected_resolution": "resolved", 
+    "expected_agent": "IAM_Agent"
+  },
+  {
+    "email": "test@email.com",
+    "issue": "Hi, I don't see my credit card in my account. Can you help me?",
+    "category": "payments",
+    "expected_resolution": "needs_escalation",
+    "expected_agent": null
+  },
+  {
+    "email": "billing@customer.com",
+    "issue": "I was charged twice for my subscription this month. Need refund.",
+    "category": "payments",
+    "expected_resolution": "needs_escalation",
+    "expected_agent": null
+  },
+  {
+    "email": "marketing@client.com",
+    "issue": "I want to stop receiving promotional emails but still get important updates.",
+    "category": "marketing",
+    "expected_resolution": "needs_escalation",
+    "expected_agent": null
+  },
+  {
+    "email": "sales@enterprise.com",
+    "issue": "We need to update our company information in your CRM system.",
+    "category": "crm",
+    "expected_resolution": "needs_escalation",
+    "expected_agent": null
+  },
+  {
+    "email": "support@client.com",
+    "issue": "Can you reset my 2FA authentication? I lost my phone.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent"
+  },
+  {
+    "email": "admin@startup.com",
+    "issue": "My login is blocked after multiple failed attempts.",
+    "category": "iam",
+    "expected_resolution": "resolved",
+    "expected_agent": "IAM_Agent"
+  },
+  {
+    "email": "user@demo.com",
+    "issue": "I need help with creating a new project in the dashboard.",
+    "category": "support",
+    "expected_resolution": "needs_escalation", 
+    "expected_agent": null
+  }
+]
