@@ -36,6 +36,7 @@ class QLearningAgent:
         # Find snake head position
         head_pos = None
         food_pos = None
+        obstacle_pos = None
         snake_body = []
         
         for i in range(self.grid_size):
@@ -46,6 +47,8 @@ class QLearningAgent:
                     food_pos = (i, j)
                 elif observation[i, j] == 1:  # Body
                     snake_body.append((i, j))
+                elif observation[i, j] == 4:
+                    obstacle_pos = (i, j) # Obstacle could be more then one
         
         if head_pos is None or food_pos is None:
             return "invalid_state"
@@ -54,7 +57,7 @@ class QLearningAgent:
         food_rel = (food_pos[0] - head_pos[0], food_pos[1] - head_pos[1])
         
         # Check for immediate dangers (walls and body)
-        dangers = self._get_immediate_dangers(head_pos, snake_body)
+        dangers = self._get_immediate_dangers(head_pos, snake_body, obstacle_pos)
         
         # Create state representation
         state_features = {
@@ -69,7 +72,7 @@ class QLearningAgent:
         
         return str(sorted(state_features.items()))
 
-    def _get_immediate_dangers(self, head_pos: Tuple[int, int], snake_body: list) -> Dict[str, bool]:
+    def _get_immediate_dangers(self, head_pos: Tuple[int, int], snake_body: list, obstacle_pos: Tuple[int, int]) -> Dict[str, bool]:
         """Check for immediate dangers in each direction."""
         row, col = head_pos
         dangers = {}
@@ -89,8 +92,11 @@ class QLearningAgent:
             
             # Check body collision
             body_danger = (new_row, new_col) in snake_body
+
+            # Check obstacle collision
+            obstacle_danger = obstacle_pos == (new_row, new_col)
             
-            dangers[direction] = wall_danger or body_danger
+            dangers[direction] = wall_danger or body_danger or obstacle_danger
         
         return dangers
 

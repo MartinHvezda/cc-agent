@@ -81,15 +81,15 @@ class SnakeEnv(gym.Env):
         if (new_head[0] < 0 or new_head[0] >= self.grid_size or
             new_head[1] < 0 or new_head[1] >= self.grid_size):
             terminated = True
-            reward = -15
+            reward = -50
         # Check collision with self
         elif new_head in self.snake_pos:
             terminated = True
-            reward = -15
+            reward = -20
         # Check collision with obstacles
         elif new_head in self.obstacles:
             terminated = True
-            reward = -15
+            reward = -40
         else:
             terminated = False
             self.snake_pos.insert(0, new_head)
@@ -97,7 +97,7 @@ class SnakeEnv(gym.Env):
             # Check if food eaten
             if new_head == self.food_pos:
                 self.score += 1
-                reward = 10
+                reward = 20
                 self._place_food()
             else:
                 # Remove tail if no food eaten

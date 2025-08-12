@@ -9,7 +9,7 @@ from q_learning_agent import QLearningAgent
 
 def train_agent(
     episodes: int = 10000,
-    grid_size: int = 15,
+    grid_size: int = 10,
     learning_rate: float = 0.1,
     discount_factor: float = 0.95,
     epsilon: float = 1.0,
