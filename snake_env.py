@@ -85,11 +85,11 @@ class SnakeEnv(gym.Env):
         # Check collision with self
         elif new_head in self.snake_pos:
             terminated = True
-            reward = -20
+            reward = -50
         # Check collision with obstacles
         elif new_head in self.obstacles:
             terminated = True
-            reward = -40
+            reward = -50
         else:
             terminated = False
             self.snake_pos.insert(0, new_head)
@@ -97,12 +97,12 @@ class SnakeEnv(gym.Env):
             # Check if food eaten
             if new_head == self.food_pos:
                 self.score += 1
-                reward = 20
+                reward = 5
                 self._place_food()
             else:
                 # Remove tail if no food eaten
                 self.snake_pos.pop()
-                reward = -0.1  # Small negative reward to encourage efficiency
+                reward = -0.01  # Small negative reward to encourage efficiency
         
         # Check if max steps reached
         truncated = self.steps >= self.max_steps
@@ -115,8 +115,6 @@ class SnakeEnv(gym.Env):
     def render(self):
         if self.render_mode == "human":
             self._render_human()
-        elif self.render_mode == "rgb_array":
-            return self._render_rgb_array()
 
     def _render_human(self):
         # Clear screen
@@ -140,26 +138,6 @@ class SnakeEnv(gym.Env):
         
         pygame.display.flip()
         self.clock.tick(self.metadata["render_fps"])
-
-    def _render_rgb_array(self):
-        canvas = np.zeros((self.grid_size, self.grid_size, 3), dtype=np.uint8)
-        
-        # Draw snake
-        for i, pos in enumerate(self.snake_pos):
-            if i == 0:  # Head
-                canvas[pos[0], pos[1]] = [0, 255, 0]
-            else:  # Body
-                canvas[pos[0], pos[1]] = [0, 200, 0]
-        
-        # Draw obstacles
-        for pos in self.obstacles:
-            canvas[pos[0], pos[1]] = [128, 128, 128]
-        
-        # Draw food
-        if self.food_pos:
-            canvas[self.food_pos[0], self.food_pos[1]] = [255, 165, 0]
-        
-        return canvas
 
     def _get_observation(self):
         grid = np.zeros((self.grid_size, self.grid_size), dtype=np.int32)

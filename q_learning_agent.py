@@ -4,6 +4,7 @@ from typing import Tuple, Dict, Any
 from collections import defaultdict
 import pickle
 import os
+from cycle_prevention import CyclePrevention
 
 
 class QLearningAgent:
@@ -26,6 +27,12 @@ class QLearningAgent:
         # Q-table: state -> action values
         self.q_table = defaultdict(lambda: np.zeros(4))
         
+        # Cycle prevention system
+        self.cycle_prevention = CyclePrevention(
+            max_history_length=8,
+            cycle_penalty=-5
+        )
+        
         # Training statistics
         self.episode_rewards = []
         self.episode_lengths = []
@@ -36,7 +43,7 @@ class QLearningAgent:
         # Find snake head position
         head_pos = None
         food_pos = None
-        obstacle_pos = None
+        obstacles = []  # Fixed: collect ALL obstacles
         snake_body = []
         
         for i in range(self.grid_size):
@@ -47,8 +54,8 @@ class QLearningAgent:
                     food_pos = (i, j)
                 elif observation[i, j] == 1:  # Body
                     snake_body.append((i, j))
-                elif observation[i, j] == 4:
-                    obstacle_pos = (i, j) # Obstacle could be more then one
+                elif observation[i, j] == 4:  # Obstacles
+                    obstacles.append((i, j))
         
         if head_pos is None or food_pos is None:
             return "invalid_state"
@@ -56,8 +63,8 @@ class QLearningAgent:
         # Calculate relative food position
         food_rel = (food_pos[0] - head_pos[0], food_pos[1] - head_pos[1])
         
-        # Check for immediate dangers (walls and body)
-        dangers = self._get_immediate_dangers(head_pos, snake_body, obstacle_pos)
+        # Check for immediate dangers (walls, body, obstacles)
+        dangers = self._get_immediate_dangers(head_pos, snake_body, obstacles)
         
         # Create state representation
         state_features = {
@@ -72,7 +79,7 @@ class QLearningAgent:
         
         return str(sorted(state_features.items()))
 
-    def _get_immediate_dangers(self, head_pos: Tuple[int, int], snake_body: list, obstacle_pos: Tuple[int, int]) -> Dict[str, bool]:
+    def _get_immediate_dangers(self, head_pos: Tuple[int, int], snake_body: list, obstacles: list) -> Dict[str, bool]:
         """Check for immediate dangers in each direction."""
         row, col = head_pos
         dangers = {}
@@ -94,22 +101,30 @@ class QLearningAgent:
             body_danger = (new_row, new_col) in snake_body
 
             # Check obstacle collision
-            obstacle_danger = obstacle_pos == (new_row, new_col)
+            obstacle_danger = (new_row, new_col) in obstacles
             
             dangers[direction] = wall_danger or body_danger or obstacle_danger
         
         return dangers
 
     def choose_action(self, observation: np.ndarray, training: bool = True) -> int:
-        """Choose action using epsilon-greedy strategy."""
+        """Choose action using epsilon-greedy strategy with cycle prevention."""
         state_key = self.get_state_key(observation)
+        head_pos = self._get_head_position(observation)
         
         if training and random.random() < self.epsilon:
-            # Explore: choose random action
-            return random.randint(0, 3)
+            # Explore: choose random action but avoid immediate dangers and cycles
+            return self._choose_safe_random_action(observation)
         else:
-            # Exploit: choose best action
-            q_values = self.q_table[state_key]
+            # Exploit: choose best action with cycle prevention
+            q_values = self.q_table[state_key].copy()
+            
+            # Apply cycle penalty using cycle prevention system
+            q_values = self.cycle_prevention.apply_cycle_penalty(
+                q_values, head_pos, self.grid_size
+            )
+            
+            # Choose action with highest Q-value
             return np.argmax(q_values)
 
     def update_q_table(
@@ -156,7 +171,7 @@ class QLearningAgent:
         recent_lengths = self.episode_lengths[-window:]
         recent_scores = self.scores[-window:]
         
-        return {
+        stats = {
             'avg_reward': np.mean(recent_rewards),
             'avg_length': np.mean(recent_lengths),
             'avg_score': np.mean(recent_scores),
@@ -164,6 +179,12 @@ class QLearningAgent:
             'epsilon': self.epsilon,
             'q_table_size': len(self.q_table)
         }
+        
+        # Add cycle prevention stats
+        cycle_info = self.cycle_prevention.get_cycle_info()
+        stats.update(cycle_info)
+        
+        return stats
 
     def save_model(self, filepath: str):
         """Save the Q-table and agent parameters."""
@@ -210,6 +231,59 @@ class QLearningAgent:
         print(f"Q-table size: {len(self.q_table)} states")
         print(f"Current epsilon: {self.epsilon:.3f}")
 
+    def reset_episode_history(self):
+        """Reset position history for new episode."""
+        self.cycle_prevention.reset_episode_history()
+    
+    def _get_head_position(self, observation: np.ndarray) -> Tuple[int, int]:
+        """Extract head position from observation."""
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                if observation[i, j] == 2:  # Head
+                    return (i, j)
+        return None
+    
+    
+    def _choose_safe_random_action(self, observation: np.ndarray) -> int:
+        """Choose random action that avoids immediate dangers and cycles."""
+        head_pos = self._get_head_position(observation)
+        
+        # Get danger information from state
+        dangers = self._extract_dangers_from_state(observation)
+        
+        # Get safe actions using cycle prevention system
+        safe_actions = self.cycle_prevention.get_safe_actions(
+            head_pos, dangers, self.grid_size
+        )
+        
+        # Choose from safe actions, or any action if none are safe
+        if safe_actions:
+            return random.choice(safe_actions)
+        else:
+            return random.randint(0, 3)
+    
+    def _extract_dangers_from_state(self, observation: np.ndarray) -> Dict[str, bool]:
+        """Extract danger information from observation."""
+        head_pos = self._get_head_position(observation)
+        if head_pos is None:
+            return {'up': True, 'right': True, 'down': True, 'left': True}
+        
+        snake_body = []
+        obstacles = []
+        
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                if observation[i, j] == 1:  # Body
+                    snake_body.append((i, j))
+                elif observation[i, j] == 4:  # Obstacles
+                    obstacles.append((i, j))
+        
+        return self._get_immediate_dangers(head_pos, snake_body, obstacles)
+    
+    def update_position_history(self, head_pos: Tuple[int, int]):
+        """Update position history for cycle detection."""
+        self.cycle_prevention.update_position_history(head_pos)
+    
     def reset_stats(self):
         """Reset training statistics."""
         self.episode_rewards = []

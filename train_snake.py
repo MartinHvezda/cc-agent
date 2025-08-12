@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import List, Dict
 import argparse
+
+from cycle_prevention import CyclePrevention
 from snake_env import SnakeEnv
 from q_learning_agent import QLearningAgent
 
@@ -10,11 +12,11 @@ from q_learning_agent import QLearningAgent
 def train_agent(
     episodes: int = 10000,
     grid_size: int = 10,
-    learning_rate: float = 0.1,
-    discount_factor: float = 0.95,
+    learning_rate: float = 0.05,
+    discount_factor: float = 0.80,
     epsilon: float = 1.0,
     epsilon_min: float = 0.01,
-    epsilon_decay: float = 0.995,
+    epsilon_decay: float = 0.997,
     save_interval: int = 1000,
     model_path: str = "models/snake_q_learning.pkl",
     load_model: bool = False
@@ -31,6 +33,7 @@ def train_agent(
         epsilon_min=epsilon_min,
         epsilon_decay=epsilon_decay
     )
+    cycle_prevention = CyclePrevention()
     
     # Load existing model if requested
     if load_model:
@@ -44,13 +47,19 @@ def train_agent(
     print("-" * 50)
     
     for episode in range(episodes):
-        # Reset environment
+        # Reset environment and agent episode history
         observation, info = env.reset()
+        agent.reset_episode_history()
         total_reward = 0
         steps = 0
         done = False
         
         while not done:
+            # Update position history for cycle detection
+            head_pos = agent._get_head_position(observation)
+            if head_pos:
+                agent.update_position_history(head_pos)
+            
             # Choose action
             action = agent.choose_action(observation, training=True)
             

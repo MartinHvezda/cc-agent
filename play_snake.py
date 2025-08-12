@@ -7,7 +7,7 @@ from q_learning_agent import QLearningAgent
 
 def play_agent(
     model_path: str = "models/snake_q_learning.pkl",
-    grid_size: int = 15,
+    grid_size: int = 10,
     fps: int = 10,
     episodes: int = 5
 ):
@@ -74,12 +74,8 @@ def play_agent(
 
 def main():
     parser = argparse.ArgumentParser(description='Play Snake game')
-    parser.add_argument('--mode', choices=['human', 'agent', 'compare'], default='agent',
-                        help='Play mode: human control, watch agent, or compare agents')
     parser.add_argument('--model-path', type=str, default='models/snake_q_learning.pkl',
                         help='Path to trained model')
-    parser.add_argument('--model-paths', type=str, nargs='+',
-                        help='Paths to multiple models for comparison')
     parser.add_argument('--grid-size', type=int, default=15, help='Grid size')
     parser.add_argument('--fps', type=int, default=10, help='Frames per second')
     parser.add_argument('--episodes', type=int, default=5, help='Number of episodes to play')
