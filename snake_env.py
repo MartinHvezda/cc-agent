@@ -19,14 +19,15 @@ class SnakeEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         
         # Observation space: grid representation
-        # 0=empty, 1=snake body, 2=snake head, 3=food
+        # 0=empty, 1=snake body, 2=snake head, 3=food, 4=obstacle
         self.observation_space = spaces.Box(
-            low=0, high=3, shape=(grid_size, grid_size), dtype=np.int32
+            low=0, high=4, shape=(grid_size, grid_size), dtype=np.int32
         )
         
         # Game state
         self.snake_pos = []
         self.food_pos = None
+        self.obstacles = []
         self.direction = 1  # Initial direction: right
         self.score = 0
         self.steps = 0
@@ -54,6 +55,9 @@ class SnakeEnv(gym.Env):
         self.score = 0
         self.steps = 0
         
+        # Generate obstacles
+        self._generate_obstacles()
+        
         # Place food
         self._place_food()
         
@@ -77,11 +81,15 @@ class SnakeEnv(gym.Env):
         if (new_head[0] < 0 or new_head[0] >= self.grid_size or
             new_head[1] < 0 or new_head[1] >= self.grid_size):
             terminated = True
-            reward = -10
+            reward = -15
         # Check collision with self
         elif new_head in self.snake_pos:
             terminated = True
-            reward = -10
+            reward = -15
+        # Check collision with obstacles
+        elif new_head in self.obstacles:
+            terminated = True
+            reward = -15
         else:
             terminated = False
             self.snake_pos.insert(0, new_head)
@@ -120,10 +128,15 @@ class SnakeEnv(gym.Env):
             color = (0, 255, 0) if i == 0 else (0, 200, 0)  # Head brighter
             pygame.draw.rect(self.screen, color, (x, y, self.cell_size, self.cell_size))
         
+        # Draw obstacles
+        for pos in self.obstacles:
+            x, y = pos[1] * self.cell_size, pos[0] * self.cell_size
+            pygame.draw.rect(self.screen, (128, 128, 128), (x, y, self.cell_size, self.cell_size))
+        
         # Draw food
         if self.food_pos:
             x, y = self.food_pos[1] * self.cell_size, self.food_pos[0] * self.cell_size
-            pygame.draw.rect(self.screen, (255, 0, 0), (x, y, self.cell_size, self.cell_size))
+            pygame.draw.rect(self.screen, (255, 165, 0), (x, y, self.cell_size, self.cell_size))
         
         pygame.display.flip()
         self.clock.tick(self.metadata["render_fps"])
@@ -138,9 +151,13 @@ class SnakeEnv(gym.Env):
             else:  # Body
                 canvas[pos[0], pos[1]] = [0, 200, 0]
         
+        # Draw obstacles
+        for pos in self.obstacles:
+            canvas[pos[0], pos[1]] = [128, 128, 128]
+        
         # Draw food
         if self.food_pos:
-            canvas[self.food_pos[0], self.food_pos[1]] = [255, 0, 0]
+            canvas[self.food_pos[0], self.food_pos[1]] = [255, 165, 0]
         
         return canvas
 
@@ -154,6 +171,10 @@ class SnakeEnv(gym.Env):
             else:  # Body
                 grid[pos[0], pos[1]] = 1
         
+        # Mark obstacles
+        for pos in self.obstacles:
+            grid[pos[0], pos[1]] = 4
+        
         # Mark food
         if self.food_pos:
             grid[self.food_pos[0], self.food_pos[1]] = 3
@@ -164,11 +185,34 @@ class SnakeEnv(gym.Env):
         empty_cells = []
         for i in range(self.grid_size):
             for j in range(self.grid_size):
-                if (i, j) not in self.snake_pos:
+                if (i, j) not in self.snake_pos and (i, j) not in self.obstacles:
                     empty_cells.append((i, j))
         
         if empty_cells:
             self.food_pos = random.choice(empty_cells)
+    
+    def _generate_obstacles(self):
+        """Generate random obstacles at the start of each episode."""
+        self.obstacles = []
+        num_obstacles = max(1, self.grid_size // 5)  # Scale obstacles with grid size
+        
+        # Get all possible positions
+        all_positions = [(i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
+        
+        # Remove snake starting position and adjacent cells
+        center = self.grid_size // 2
+        forbidden_positions = set()
+        for di in [-1, 0, 1]:
+            for dj in [-1, 0, 1]:
+                pos = (center + di, center + dj)
+                if 0 <= pos[0] < self.grid_size and 0 <= pos[1] < self.grid_size:
+                    forbidden_positions.add(pos)
+        
+        available_positions = [pos for pos in all_positions if pos not in forbidden_positions]
+        
+        # Randomly select obstacle positions
+        if len(available_positions) >= num_obstacles:
+            self.obstacles = random.sample(available_positions, num_obstacles)
 
     def _get_new_head(self, head: Tuple[int, int], direction: int) -> Tuple[int, int]:
         # 0=up, 1=right, 2=down, 3=left
